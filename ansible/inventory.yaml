@@ -1,0 +1,19 @@
+k8s-worker:
+  hosts:
+    k8s-node-01:
+      ansible_host: 10.1.42.54
+    k8s-node-02:
+      ansible_host:
+  vars:
+    ansible_connection: ssh
+    ansible_ssh_user: ansible
+    ansible_ssh_private_key_file: /home/ansible/.ssh/ansible-auth
+
+k8s-master:
+  hosts:
+    k8s-master-01:
+      ansible_host:
+  vars:
+    ansible_connection: ssh
+    ansible_ssh_user: ansible
+    ansible_ssh_private_key_file: /home/ansible/.ssh/ansible-auth

@@ -1,0 +1,156 @@
+- name: k8s-node playbook
+  hosts: k8s-worker
+  become: 'yes'
+  tasks:
+    - name: apt update
+      apt:
+        update_cache: yes
+
+    - name: Disable Swap
+      shell: |
+        swapoff -a
+
+    - name: Backup fstab
+      ansible.builtin.copy:
+        src: /etc/fstab
+        dest: /etc/fstab.backup
+        owner: root
+        group: root
+        mode: '0644'
+
+    - name: No Swap, Never Swap
+      replace:
+        path: /etc/fstab
+        regexp: '^([^#].*?\sswap\s+sw\s+.*)$'
+        replace: '# \1'
+
+    - name: Install Required Packages
+      apt:
+        pkg:
+          - vim
+          - apt-transport-https
+          - ca-certificates
+          - curl
+        state: latest
+
+    - name: Configure and install containerd
+      block:
+
+      - name: Install containerd
+        apt:
+          package:
+            - containerd
+          state: present
+
+      - name: Create containerd directory
+        file:
+          path: /etc/containerd
+          state: directory
+
+      - name: Create containerd config file
+        file:
+          path: /etc/modules-load.d/containerd.conf
+          state: touch
+          owner: root
+          group: root
+          mode: '0644'
+
+      - name: Configure containerd modules
+        blockinfile:
+          path: /etc/modules-load.d/containerd.conf
+          block: |
+            overlay
+            br_netfilter
+
+      - name: Create default containerd config
+        shell: /usr/bin/containerd config default > /etc/containerd/config.toml
+
+      - name: Configure systemd cgroup driver for containerd
+        lineinfile:
+          path: /etc/containerd/config.toml
+          insertafter: '^[\s|\S]*containerd.runtimes.runc.options]$'
+          line: "            SystemdCgroup = true"
+          state: present
+
+      - name: Enable and start containerd service
+        systemd:
+          name: containerd
+          state: restarted
+          enabled: yes
+          daemon-reload: yes
+    
+    - name: Configure and install Kubernetes
+      block:
+              
+      - name: Create kubernetes params file
+        file:
+          path: /etc/sysctl.d/99-kubernetes-cri.conf
+          state: touch
+          owner: root
+          group: root
+          mode: '0644'
+
+      - name: Configure default kubernetes params
+        lineinfile:
+          path: /etc/sysctl.d/99-kubernetes-cri.conf
+          line: "{{ item }}"
+        with_items:
+          - "net.bridge.bridge-nf-call-iptables  = 1"
+          - "net.ipv4.ip_forward                 = 1"
+          - "net.bridge.bridge-nf-call-ip6tables = 1"
+
+      - name: Install GPG Key, Repo, and Kubernetes Components
+        block:
+          - name: Add Kubernetes Apt Key
+            get_url:
+              url: https://pkgs.k8s.io/core:/stable:/v1.31/deb/Release.key
+              dest: /etc/apt/keyrings/kubernetes-apt-keyring.asc
+              mode: "0644"
+              force: true
+        
+          - name: Add Kubernetes Apt Repository
+            apt_repository:
+              repo: "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.asc] https://pkgs.k8s.io/core:/stable:/v1.31/deb/ /"
+              state: present
+              update_cache: yes
+
+          - name: Install Kubernetes Components
+            apt:
+              pkg:
+                - kubelet=1.31.*
+                - kubeadm=1.31.*
+                - kubectl=1.31.*
+          
+          - name: Enable kubelet service
+            service:
+              name: kubelet
+              enabled: yes
+
+      - name: Load Kernel modules
+        block:
+
+        - name: Load br_netfilter kernel module
+          modprobe:
+            name: br_netfilter
+            state: present
+
+        - name: Set bridge-nf-call-iptables
+          sysctl:
+            name: net.bridge.bridge-nf-call-iptables
+            value: 1
+
+        - name: Set ip_forward
+          sysctl:
+            name: net.ipv4.ip_forward
+            value: 1
+
+      - name: Apply systemctl params
+        command: sysctl --system
+
+- hosts: k8s-master
+  become: yes
+  tasks:
+    - name: Install kubectl
+      apt:
+        name: kubectl=1.31.*
+        state: present
