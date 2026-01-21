@@ -1,0 +1,22 @@
+;
+; Zone file for blackout.space
+;
+; The full zone file
+;
+$TTL 3D
+$ORIGIN blackout.quest. ; the base domain
+@	IN	SOA	ns01.blackout.quest.	hostmaster.blackout.quest. (
+				1764502074	; serial number (the current date in epoch)
+				12h		; refresh
+				15m		; update retry
+				3w		; expiry
+				2h		; minimum
+				)
+; primary name server for the domain
+	IN	NS	ns01.blackout.quest.
+; secondary name server for the domain
+	IN	NS	ns02.blackout.quest.
+; hosts on this domain
+msilo01	IN	A	10.1.69.14
+ns01	IN	A	10.1.42.25
+ns02	IN	A	10.1.42.26
