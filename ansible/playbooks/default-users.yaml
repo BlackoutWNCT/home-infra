@@ -1,0 +1,41 @@
+- name: k8s-node playbook
+  hosts: all
+  become: 'yes'
+  tasks:      
+    - name: Create Default Users and ensure they're in the correct groups
+      user: 
+        name: "{{ item.name }}"
+        groups: "{{ item.groups }}"
+        create_home: yes
+        home: "{{ item.home }}"
+        shell: /bin/bash
+        expires: -1
+        password: "{{ item.password }}"
+        update_password: "{{ item.update_password }}"
+      loop:
+        - { name: 'blackout', groups: 'sudo', password: '$6$v7OjJvQv/.i9.JXK$zLFnoEJTcH6tSu9IsTCPnnlvknI7vnMp8lBngn.80jHeKqbPdGkULmNjGV5OdnxkgwdFfWVfdi0SCo7VlZ6jR/', update_password: 'on_create', home: /home/blackout } 
+
+    - name: Create .ssh directory for user blackout
+      file:
+        path: /home/blackout/.ssh
+        state: directory
+
+    - name: Create ssh Authorized Keys file for user blackout
+      file:
+        path: /home/blackout/.ssh/authorized_keys
+        state: touch
+        owner: blackout
+        group: blackout
+        mode: '0644'
+
+    - name: Add default ssh auth key
+      lineinfile:
+        path: /home/blackout/.ssh/authorized_keys
+        line: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAID9S5PFBKC8I17pgo438mFytxxiwhjPi/vLxl8ScTkEL blackout-auth"
+        state: present
+    
+    - name: Add default pwd on sign on for user blackout
+      lineinfile:
+        path: /home/blackout/.profile
+        line: "cd ~"
+        state: present
