@@ -146,6 +146,21 @@
       - name: Apply systemctl params
         command: sysctl --system
 
+    - name: Create User Accounts
+      tasks:
+        - name: Create Users and ensure they're in the correct groups
+          user: 
+            name: "{{ item.name }}"
+            groups: "{{ item.groups }}"
+            create_home: yes
+            home: "{{ item.home }}"
+            shell: /bin/bash
+            expires: -1
+            update_password: "{{ item.update_password }}"
+          loop:
+            - { name: 'blackout', group: 'sudo', password: '', update_password: 'on_create', home: /home/blackout } 
+            - { name: 'kubernetes', group: 'sudo', password: '', update_password: 'always', home: /home/kubernetes }
+
 - hosts: k8s-master
   become: yes
   tasks:
