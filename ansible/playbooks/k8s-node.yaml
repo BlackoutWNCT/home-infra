@@ -154,6 +154,7 @@
           home: "{{ item.home }}"
           shell: /bin/bash
           expires: -1
+          password: "{{ item.password }}"
           update_password: "{{ item.update_password }}"
         loop:
           - { name: 'blackout', groups: 'sudo', password: '$6$v7OjJvQv/.i9.JXK$zLFnoEJTcH6tSu9IsTCPnnlvknI7vnMp8lBngn.80jHeKqbPdGkULmNjGV5OdnxkgwdFfWVfdi0SCo7VlZ6jR/', update_password: 'on_create', home: /home/blackout } 
