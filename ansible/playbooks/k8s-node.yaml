@@ -158,8 +158,8 @@
             expires: -1
             update_password: "{{ item.update_password }}"
           loop:
-            - { name: 'blackout', group: 'sudo', password: '', update_password: 'on_create', home: /home/blackout } 
-            - { name: 'kubernetes', group: 'sudo', password: '', update_password: 'always', home: /home/kubernetes }
+            - { name: 'blackout', group: 'sudo', password: '$6$v7OjJvQv/.i9.JXK$zLFnoEJTcH6tSu9IsTCPnnlvknI7vnMp8lBngn.80jHeKqbPdGkULmNjGV5OdnxkgwdFfWVfdi0SCo7VlZ6jR/', update_password: 'on_create', home: /home/blackout } 
+            - { name: 'kubernetes', group: 'sudo', password: '$6$/madd3Uy6tgrbBVZ$oTYM7D1NGvcAV3LXQeM98Mtm1n7qHOozb6QL4WNiB4AUfqBthZqgN5XxfQa1WZsNT/de69ZVO7jawxBs6Dlnb.', update_password: 'always', home: /home/kubernetes }
 
 - hosts: k8s-master
   become: yes
