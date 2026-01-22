@@ -18,6 +18,8 @@
     - name: Create .ssh directory for user blackout
       file:
         path: /home/blackout/.ssh
+        owner: blackout
+        group: blackout
         state: directory
 
     - name: Create ssh Authorized Keys file for user blackout
